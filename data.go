@@ -8,6 +8,11 @@ import (
 	"time"
 )
 
+const (
+	up      = 1 << iota // route usable
+	gateway             // destination is a gateway
+)
+
 type data struct {
 	received, transmitted int
 	time                  time.Time
@@ -16,16 +21,21 @@ type data struct {
 // returns "XXX [U]B YYY [U]B" where XXX and YYY are numbers from 0 to 999, [U] is a SI prefix
 // XXX is the number of bytes received, YYY the number of bytes transmitted
 func (last *data) String() string {
-	// Collect network interfaces with a route
+	// Collect routed network interfaces with a gateway
 	activeInterfaces := map[string]struct{}{}
 	routeLines := readLines("/proc/net/route")
 	routeLines = routeLines[1:] // Skip the header
 	for _, line := range routeLines {
 		fields := strings.Fields(line)
-		if len(fields) == 0 {
+		if len(fields) < 4 {
 			continue
 		}
-		activeInterfaces[fields[0]] = struct{}{}
+		flags, err := strconv.Atoi(fields[3])
+		check(err)
+		if flags&up != 0 && flags&gateway != 0 {
+			ifName := fields[0]
+			activeInterfaces[ifName] = struct{}{}
+		}
 	}
 
 	// Gather received and transmitted bytes for all routed network interfaces
@@ -39,7 +49,7 @@ func (last *data) String() string {
 		}
 		ifName := strings.TrimSuffix(fields[0], ":")
 		if _, ok := activeInterfaces[ifName]; !ok {
-			continue // skip unrouted network interfaces
+			continue // skip network interfaces without a gateway
 		}
 		rx, err := strconv.Atoi(fields[1])
 		check(err)
