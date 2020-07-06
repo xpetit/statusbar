@@ -15,18 +15,30 @@ type data struct {
 // returns "XXX [U]B YYY [U]B" where XXX and YYY are numbers from 0 to 999, [U] is a SI prefix
 // XXX is the number of bytes received, YYY the number of bytes transmitted
 func (last *data) String() string {
+	// Collect network interfaces with a route
+	activeInterfaces := map[string]struct{}{}
+	routeLines := readLines("/proc/net/route")
+	routeLines = routeLines[1:] // Skip the header
+	for _, line := range routeLines {
+		fields := strings.Fields(line)
+		if len(fields) == 0 {
+			continue
+		}
+		activeInterfaces[fields[0]] = struct{}{}
+	}
+
+	// Gather received and transmitted bytes for all routed network interfaces
 	var received, transmitted int
-	lines := readLines("/proc/net/dev")
-	lines = lines[2:] // Ignore the 2-lines header
-	for _, line := range lines {
+	devLines := readLines("/proc/net/dev")
+	devLines = devLines[2:] // Skip the 2-lines header
+	for _, line := range devLines {
 		fields := strings.Fields(line)
 		if len(fields) < 10 {
 			continue // skip malformated lines
 		}
 		ifName := strings.TrimSuffix(fields[0], ":")
-		switch ifName {
-		case "docker0", "lo":
-			continue // skip local network interfaces
+		if _, ok := activeInterfaces[ifName]; !ok {
+			continue // skip unrouted network interfaces
 		}
 		rx, err := strconv.Atoi(fields[1])
 		check(err)
@@ -35,6 +47,8 @@ func (last *data) String() string {
 		received += rx
 		transmitted += tx
 	}
+
+	// Compute and format stats
 	now := time.Now()
 	delta := float64(now.Sub(last.time)) / 1_000_000_000
 	receivedPerSec := int(float64(received-last.received) / delta)
