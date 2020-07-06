@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -51,8 +52,8 @@ func (last *data) String() string {
 	// Compute and format stats
 	now := time.Now()
 	delta := float64(now.Sub(last.time)) / 1_000_000_000
-	receivedPerSec := int(float64(received-last.received) / delta)
-	transmittedPerSec := int(float64(transmitted-last.transmitted) / delta)
+	receivedPerSec := int(math.Round(float64(received-last.received) / delta))
+	transmittedPerSec := int(math.Round(float64(transmitted-last.transmitted) / delta))
 	last.received = received
 	last.transmitted = transmitted
 	last.time = now
