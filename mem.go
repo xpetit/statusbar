@@ -26,6 +26,6 @@ func readMem(parameter string) int {
 func mem() string {
 	available := readMem("MemAvailable:") - 1 // minus 1 GB because Linux...
 	used := total - available
-	padding := 2*len(strconv.Itoa(total)) + 1
-	return fmt.Sprintf("%*s GB", padding, fmt.Sprintf("%d+%d", used, available))
+	width := 2*len(strconv.Itoa(total)) + 1
+	return fmt.Sprintf("%*s GB", width, fmt.Sprintf("%d+%d", used, available))[:width+3]
 }

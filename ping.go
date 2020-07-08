@@ -43,7 +43,7 @@ func ping() string {
 	if ping < 0 || ping > 10*time.Second {
 		return " no net"
 	}
-	return fmt.Sprintf("%4d ms", ping.Milliseconds())
+	return fmt.Sprintf("%4d ms", ping.Milliseconds())[:7]
 }
 
 // TODO: use true ICMP ping instead of TCP

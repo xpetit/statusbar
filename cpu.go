@@ -10,7 +10,7 @@ import (
 
 var (
 	threads = runtime.NumCPU()
-	padding = len(strconv.Itoa(100 * threads))
+	width   = len(strconv.Itoa(100 * threads))
 )
 
 type cpu struct {
@@ -29,5 +29,5 @@ func (last *cpu) String() string {
 	percent := 100 * (float64(threads) - (float64(idle-last.idle) / delta / 100))
 	last.idle = idle
 	last.time = now
-	return fmt.Sprintf("%*.f %%", padding, percent)
+	return fmt.Sprintf("%*.f %%", width, percent)[:width+2]
 }

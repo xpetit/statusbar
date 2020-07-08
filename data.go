@@ -8,11 +8,6 @@ import (
 	"time"
 )
 
-const (
-	up      = 1 << iota // route usable
-	gateway             // destination is a gateway
-)
-
 type data struct {
 	received, transmitted int
 	time                  time.Time
@@ -32,6 +27,10 @@ func (last *data) String() string {
 		}
 		flags, err := strconv.Atoi(fields[3])
 		check(err)
+		const (
+			up      = 1 << iota // route usable
+			gateway             // destination is a gateway
+		)
 		if flags&up != 0 && flags&gateway != 0 {
 			ifName := fields[0]
 			activeInterfaces[ifName] = struct{}{}
@@ -67,11 +66,14 @@ func (last *data) String() string {
 	last.received = received
 	last.transmitted = transmitted
 	last.time = now
-	return fmt.Sprintf("%s %s", byteCountDecimal(receivedPerSec), byteCountDecimal(transmittedPerSec))
+	return fmt.Sprintf("%6s %6s", byteCountDecimal(receivedPerSec), byteCountDecimal(transmittedPerSec))
 }
 
 // From https://programming.guide/go/formatting-byte-size-to-human-readable-format.html
 func byteCountDecimal(b int) string {
+	if b < 0 {
+		return "  0  B"
+	}
 	const unit = 1000
 	if b < unit {
 		return fmt.Sprintf("%3d  B", b)
