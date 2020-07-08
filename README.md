@@ -19,7 +19,7 @@
 ## Usage
 
 ```
-go get github.com/xpetit/statusbar
+go get -u github.com/xpetit/statusbar
 $(go env GOPATH)/bin/statusbar &
 sleep 3
 cat /tmp/statusbar
