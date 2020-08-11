@@ -18,44 +18,48 @@ type data struct {
 func (last *data) String() string {
 	// Collect routed network interfaces with a gateway
 	activeInterfaces := map[string]struct{}{}
-	routeLines := readLines("/proc/net/route")
-	routeLines = routeLines[1:] // Skip the header
-	for _, line := range routeLines {
-		fields := strings.Fields(line)
-		if len(fields) < 4 {
-			continue
-		}
-		flags, err := strconv.Atoi(fields[3])
-		check(err)
-		const (
-			up      = 1 << iota // route usable
-			gateway             // destination is a gateway
-		)
-		if flags&up != 0 && flags&gateway != 0 {
-			ifName := fields[0]
-			activeInterfaces[ifName] = struct{}{}
+	{
+		lines := readLines("/proc/net/route")
+		lines = lines[1:] // Skip the header
+		for _, line := range lines {
+			fields := strings.Fields(line)
+			if len(fields) < 4 {
+				continue
+			}
+			flags, err := strconv.Atoi(fields[3])
+			check(err)
+			const (
+				up      = 1 << iota // route usable
+				gateway             // destination is a gateway
+			)
+			if flags&up != 0 && flags&gateway != 0 {
+				ifName := fields[0]
+				activeInterfaces[ifName] = struct{}{}
+			}
 		}
 	}
 
 	// Gather received and transmitted bytes for all routed network interfaces
 	var received, transmitted int
-	devLines := readLines("/proc/net/dev")
-	devLines = devLines[2:] // Skip the 2-lines header
-	for _, line := range devLines {
-		fields := strings.Fields(line)
-		if len(fields) < 10 {
-			continue // skip malformated lines
+	{
+		lines := readLines("/proc/net/dev")
+		lines = lines[2:] // Skip the 2-lines header
+		for _, line := range lines {
+			fields := strings.Fields(line)
+			if len(fields) < 10 {
+				continue // skip malformated lines
+			}
+			ifName := strings.TrimSuffix(fields[0], ":")
+			if _, ok := activeInterfaces[ifName]; !ok {
+				continue // skip network interfaces without a gateway
+			}
+			rx, err := strconv.Atoi(fields[1])
+			check(err)
+			tx, err := strconv.Atoi(fields[9])
+			check(err)
+			received += rx
+			transmitted += tx
 		}
-		ifName := strings.TrimSuffix(fields[0], ":")
-		if _, ok := activeInterfaces[ifName]; !ok {
-			continue // skip network interfaces without a gateway
-		}
-		rx, err := strconv.Atoi(fields[1])
-		check(err)
-		tx, err := strconv.Atoi(fields[9])
-		check(err)
-		received += rx
-		transmitted += tx
 	}
 
 	// Compute and format stats
