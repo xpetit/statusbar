@@ -70,28 +70,22 @@ func (last *data) String() string {
 	last.received = received
 	last.transmitted = transmitted
 	last.time = now
-	return fmt.Sprintf("%6s %6s", byteCountDecimal(receivedPerSec), byteCountDecimal(transmittedPerSec))
+	return fmt.Sprintf("%6s %6s", prettyByte(receivedPerSec), prettyByte(transmittedPerSec))
 }
 
-// From https://programming.guide/go/formatting-byte-size-to-human-readable-format.html
-func byteCountDecimal(b int) string {
-	if b < 0 {
-		return "  0  B"
+func prettyByte(i int) string {
+	f := float64(i)
+	if f < 0 {
+		f = 0
 	}
-	const unit = 1000
-	if b < unit {
-		return fmt.Sprintf("%3d  B", b)
+	unit := " kMGTPEZY"
+	for f >= 1000 {
+		unit = unit[1:]
+		f /= 1000
 	}
-	div := unit
-	exp := 0
-	for n := b / unit; n >= unit; n /= unit {
-		div *= unit
-		exp++
+	var prec int
+	if unit[0] != ' ' && math.Round(f) < 10 {
+		prec = 1
 	}
-	return fmt.Sprintf("%3.f %cB", float64(b)/float64(div), "kMGTPEZY"[exp])
+	return fmt.Sprintf("%3.*f %cB", prec, f, unit[0])
 }
-
-// TODO: consider changing value approximation:
-//   123  B => 0.1 kB
-//   123 kB => 0.1 MB
-//   789 MB => 0.8 GB
