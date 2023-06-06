@@ -1,10 +1,10 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net"
 	"os"
-	"path"
 	"runtime"
 	"strconv"
 	"time"
@@ -25,9 +25,10 @@ func date() string {
 var cpuUsageWidth = len(strconv.Itoa(100 * runtime.NumCPU()))
 
 func main() {
-	socket := path.Join(os.Getenv("XDG_RUNTIME_DIR"), "statusbar.sock")
-	os.Remove(socket)
-	l := C2(net.Listen("unix", socket))
+	socket := flag.String("socket", "/run/user/1000/statusbar.sock", "Socket filepath")
+	flag.Parse()
+	os.Remove(*socket)
+	l := C2(net.Listen("unix", *socket))
 	for {
 		conn := C2(l.Accept())
 		fmt.Fprintf(conn, " %6s │ %.f° │ %*.f%% │ %.1fGB │ %s ",
