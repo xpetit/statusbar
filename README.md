@@ -25,7 +25,7 @@ go install github.com/xpetit/statusbar@latest
 `lm-sensors` is required. Add an entry to `crontab -e`:
 
 ```
-@reboot /home/USERNAME/go/bin/statusbar &
+@reboot sleep 2 && /home/USERNAME/go/bin/statusbar &
 ```
 
 ### Usage
