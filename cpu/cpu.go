@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"io"
 	"os"
+	"os/exec"
 	"runtime"
 	"strconv"
 	"strings"
@@ -13,8 +14,13 @@ import (
 )
 
 var (
-	stat     = C2(os.Open("/proc/stat"))
-	ncpus    = float64(runtime.NumCPU())
+	tick = C2(strconv.ParseFloat(
+		strings.TrimSuffix(string(C2(Output(exec.Command("getconf", "CLK_TCK")))), "\n"),
+		64,
+	))
+	stat  = C2(os.Open("/proc/stat"))
+	ncpus = float64(runtime.NumCPU())
+
 	lastTime time.Time
 	lastIdle float64
 )
@@ -23,11 +29,11 @@ var (
 func Usage() float64 {
 	C2(stat.Seek(0, io.SeekStart))
 	var (
+		now     = time.Now()
 		line    = C2(bufio.NewReader(stat).ReadString('\n'))
 		idle    = float64(C2(strconv.Atoi(strings.Fields(line)[4])))
-		now     = time.Now()
 		secs    = now.Sub(lastTime).Seconds()
-		percent = 100 * (ncpus - (idle-lastIdle)/secs/100)
+		percent = 100 * (ncpus - (idle-lastIdle)/secs/tick)
 	)
 	lastIdle = idle
 	lastTime = now
