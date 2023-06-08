@@ -1,6 +1,6 @@
 # statusbar
 
-A statusbar for Linux
+A compact status bar for Linux.
 
 ```
   .------------------------------------------ Network bytes exchanged per second
