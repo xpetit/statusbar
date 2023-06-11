@@ -65,5 +65,8 @@ func Usage() (exchangedPerSec float64) {
 	exchangedPerSec = (exchanged - lastExchanged) / now.Sub(lastTime).Seconds()
 	lastExchanged = exchanged
 	lastTime = now
+	if exchangedPerSec < 0 {
+		exchangedPerSec = 0
+	}
 	return exchangedPerSec
 }
